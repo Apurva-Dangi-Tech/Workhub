@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="WorkHub">
+<meta name="theme-color" content="#4A42B0">
+<title>WorkHub — Passwords & Tasks</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --cream:#F7F6F2; --white:#FFFFFF; --border:#E4E2D8; --border2:#CCCAC0;
+  --text:#28271F; --text2:#5C5A52; --text3:#9A9890;
+  --accent:#4A42B0; --accent-d:#38318A; --accent-light:#EEEDFC;
+  --green:#1A8C61; --green-light:#E0F5EC;
+  --amber:#B06A10; --amber-light:#FDF0DC;
+  --red:#C93535; --red-light:#FDEAEA;
+  --blue:#1560A0; --blue-light:#E4F0FB;
+  --gray-light:#F1EFE8;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+body { font-family:'Montserrat',sans-serif; background:var(--cream); color:var(--text); min-height:100vh; font-size:14px; line-height:1.5; -webkit-tap-highlight-color:transparent; }
+
+/* HEADER */
+.header { background:var(--white); border-bottom:1px solid var(--border); padding:0 1.5rem; display:flex; align-items:center; justify-content:space-between; height:58px; position:sticky; top:0; z-index:50; }
+.brand { display:flex; align-items:center; gap:9px; }
+.brand-icon { width:32px; height:32px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.brand-icon svg { width:17px; height:17px; fill:white; }
+.brand-name { font-size:16px; font-weight:800; letter-spacing:-0.4px; }
+.brand-name span { color:var(--accent); }
+.header-right { display:flex; align-items:center; gap:8px; }
+.save-dot { width:7px; height:7px; border-radius:50%; background:var(--amber); flex-shrink:0; transition:background 0.3s; }
+.save-dot.clean { background:var(--green); }
+.save-status { font-size:10px; font-weight:600; color:var(--text3); display:flex; align-items:center; gap:5px; }
+
+/* SYNC BAR */
+.sync-bar { background:var(--accent); padding:9px 1.5rem; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.sync-msg { font-size:11px; font-weight:600; color:rgba(255,255,255,0.88); display:flex; align-items:center; gap:6px; }
+.sync-actions { display:flex; gap:6px; }
+.sync-btn { padding:5px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.35); background:rgba(255,255,255,0.15); font-family:'Montserrat',sans-serif; font-size:11px; font-weight:700; color:white; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+.sync-btn:hover { background:rgba(255,255,255,0.28); }
+.sync-btn.light { background:white; color:var(--accent); border-color:white; }
+.sync-btn.light:hover { background:#f0effc; }
+
+/* DATA BAR */
+.data-bar { background:#EEECEA; border-bottom:1px solid var(--border); padding:7px 1.5rem; }
+.data-info { font-size:11px; color:var(--text3); font-weight:500; }
+.data-info strong { color:var(--text2); }
+
+/* TABS */
+.tab-nav { padding:1rem 1.5rem 0; display:flex; gap:2px; border-bottom:2px solid var(--border); overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.tab-nav::-webkit-scrollbar { display:none; }
+.tab-btn { padding:9px 18px; border:none; background:transparent; font-family:'Montserrat',sans-serif; font-size:13px; font-weight:600; color:var(--text3); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.18s; white-space:nowrap; display:flex; align-items:center; gap:6px; }
+.tab-btn:hover { color:var(--text2); }
+.tab-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
+.tab-count { background:var(--accent-light); color:var(--accent); font-size:10px; font-weight:700; padding:2px 6px; border-radius:20px; }
+.tab-btn.active .tab-count { background:var(--accent); color:white; }
+
+/* MAIN */
+.main { padding:1.25rem 1.5rem; }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* STATS */
+.stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:1.25rem; }
+.stat-card { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+.stat-num { font-size:22px; font-weight:800; line-height:1; }
+.stat-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--text3); margin-top:4px; }
+
+/* TOOLBAR */
+.toolbar { display:flex; align-items:center; gap:8px; margin-bottom:1rem; flex-wrap:wrap; }
+.search-box { position:relative; flex:1; min-width:180px; }
+.search-box svg { position:absolute; left:10px; top:50%; transform:translateY(-50%); width:14px; height:14px; color:var(--text3); pointer-events:none; }
+.search-box input { width:100%; padding:9px 10px 9px 33px; border:1px solid var(--border2); border-radius:8px; font-family:'Montserrat',sans-serif; font-size:13px; background:var(--white); color:var(--text); outline:none; transition:border 0.15s,box-shadow 0.15s; }
+.search-box input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-light); }
+.search-box input::placeholder { color:var(--text3); }
+select.filter { padding:9px 10px; border:1px solid var(--border2); border-radius:8px; font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; color:var(--text); background:var(--white); cursor:pointer; outline:none; -webkit-appearance:none; }
+select.filter:focus { border-color:var(--accent); }
+
+/* BUTTONS */
+.btn { padding:9px 14px; border-radius:8px; border:1px solid var(--border2); background:var(--white); font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; color:var(--text); cursor:pointer; transition:all 0.15s; white-space:nowrap; display:inline-flex; align-items:center; gap:5px; }
+.btn:hover { background:var(--cream); border-color:var(--accent); color:var(--accent); }
+.btn-primary { background:var(--accent); color:white; border-color:var(--accent); }
+.btn-primary:hover { background:var(--accent-d); border-color:var(--accent-d); color:white; }
+.btn-success { background:var(--green); color:white; border-color:var(--green); }
+.btn-success:hover { background:#126B4A; color:white; }
+.btn-danger { background:var(--red-light); color:var(--red); border-color:#F0AAAA; }
+.btn-danger:hover { background:var(--red); color:white; border-color:var(--red); }
+.btn-sm { padding:6px 11px; font-size:11px; border-radius:6px; }
+.btn-xs { padding:4px 8px; font-size:10px; border-radius:5px; }
+
+/* TABLE */
+.table-wrap { background:var(--white); border:1px solid var(--border); border-radius:12px; overflow:hidden; overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:13px; min-width:680px; }
+thead { background:var(--cream); }
+th { padding:10px 13px; text-align:left; font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.7px; border-bottom:1px solid var(--border); white-space:nowrap; }
+td { padding:11px 13px; border-bottom:1px solid var(--border); vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:#FAFAF7; }
+.action-cell { display:flex; gap:5px; align-items:center; }
+
+/* MOBILE CARDS */
+.card-list { display:none; }
+.m-card { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:13px 14px; margin-bottom:8px; }
+.m-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:8px; }
+.m-card-title { font-size:14px; font-weight:700; }
+.m-card-sub { font-size:11px; color:var(--text3); margin-top:3px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.m-card-row { display:flex; gap:6px; align-items:flex-start; font-size:12px; color:var(--text2); margin-bottom:5px; }
+.m-card-row:last-of-type { margin-bottom:0; }
+.m-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text3); min-width:60px; padding-top:1px; }
+.m-card-actions { display:flex; gap:6px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+.m-card-actions .btn { flex:1; justify-content:center; }
+
+/* BADGES */
+.badge { display:inline-flex; align-items:center; padding:3px 8px; border-radius:20px; font-size:10px; font-weight:700; letter-spacing:0.2px; white-space:nowrap; }
+.b-purple { background:var(--accent-light); color:var(--accent); }
+.b-green  { background:var(--green-light); color:var(--green); }
+.b-amber  { background:var(--amber-light); color:var(--amber); }
+.b-red    { background:var(--red-light); color:var(--red); }
+.b-blue   { background:var(--blue-light); color:var(--blue); }
+.b-gray   { background:var(--gray-light); color:var(--text2); }
+
+/* PW */
+.pw-wrap { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.pw-dots { font-size:14px; letter-spacing:2px; color:var(--text3); user-select:none; }
+.pw-text { font-family:monospace; font-size:12px; word-break:break-all; }
+.icon-btn { background:none; border:none; cursor:pointer; color:var(--text3); font-size:10px; font-family:'Montserrat',sans-serif; font-weight:700; padding:2px 5px; border-radius:4px; transition:all 0.15s; }
+.icon-btn:hover { color:var(--accent); background:var(--accent-light); }
+
+.overdue { color:var(--red); font-weight:700; }
+
+/* EMPTY */
+.empty { text-align:center; padding:3rem 1rem; color:var(--text3); }
+.empty-icon { font-size:34px; margin-bottom:8px; }
+.empty-title { font-size:14px; font-weight:600; color:var(--text2); }
+.empty-sub { font-size:12px; margin-top:4px; }
+
+/* MODAL */
+.overlay { display:none; position:fixed; inset:0; background:rgba(28,27,20,0.5); z-index:200; align-items:flex-end; justify-content:center; }
+.overlay.open { display:flex; }
+.modal { background:var(--white); border-radius:18px 18px 0 0; padding:1.5rem 1.5rem calc(1.5rem + var(--safe-b)); width:100%; max-width:620px; max-height:92vh; overflow-y:auto; animation:sheetUp 0.22s ease; }
+@keyframes sheetUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+.modal-handle { width:36px; height:4px; border-radius:2px; background:var(--border2); margin:0 auto 1.25rem; display:block; }
+.modal-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid var(--border); }
+.modal-title { font-size:15px; font-weight:700; }
+.modal-close { background:none; border:none; cursor:pointer; font-size:18px; color:var(--text3); width:30px; height:30px; border-radius:6px; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+.modal-close:hover { background:var(--red-light); color:var(--red); }
+
+/* FORM */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.form-grid .span2 { grid-column:1/-1; }
+.field { display:flex; flex-direction:column; gap:5px; }
+.field label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--text2); }
+.field input,.field select,.field textarea { padding:10px 12px; border:1px solid var(--border2); border-radius:7px; font-family:'Montserrat',sans-serif; font-size:14px; color:var(--text); background:var(--white); outline:none; transition:border 0.15s,box-shadow 0.15s; -webkit-appearance:none; }
+.field input:focus,.field select:focus,.field textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-light); }
+.field input::placeholder,.field textarea::placeholder { color:var(--text3); }
+.field textarea { min-height:70px; resize:vertical; }
+.pw-input-row { display:flex; gap:7px; }
+.pw-input-row input { flex:1; min-width:0; }
+.modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:1.25rem; padding-top:1rem; border-top:1px solid var(--border); }
+
+/* HISTORY */
+.hist-entry { display:flex; justify-content:space-between; align-items:center; padding:9px 12px; border-radius:7px; background:var(--cream); margin-bottom:6px; }
+.hist-pw { font-family:monospace; font-size:13px; color:var(--text2); word-break:break-all; }
+.hist-date { color:var(--text3); font-size:11px; white-space:nowrap; margin-left:8px; }
+
+/* SYNC MODAL OPTIONS */
+.sync-option { border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:10px; cursor:pointer; transition:all 0.15s; }
+.sync-option:hover { border-color:var(--accent); background:var(--accent-light); }
+.sync-opt-title { font-size:13px; font-weight:700; margin-bottom:3px; }
+.sync-opt-sub { font-size:11px; color:var(--text3); line-height:1.5; }
+.sync-divider { text-align:center; font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin:14px 0; position:relative; }
+.sync-divider::before { content:''; position:absolute; left:0; top:50%; width:100%; height:1px; background:var(--border); }
+.sync-divider span { background:var(--white); padding:0 10px; position:relative; }
+.info-box { background:var(--accent-light); border-radius:8px; padding:12px 14px; margin-top:4px; }
+.info-box-title { font-size:11px; font-weight:700; color:var(--accent); margin-bottom:5px; }
+.info-box-body { font-size:11px; color:var(--text2); line-height:1.65; }
+
+/* TOAST */
+.toast { position:fixed; bottom:calc(20px + var(--safe-b)); left:50%; transform:translateX(-50%) translateY(8px); background:var(--text); color:white; padding:11px 18px; border-radius:9px; font-size:12px; font-weight:600; z-index:999; opacity:0; transition:all 0.25s; pointer-events:none; white-space:nowrap; max-width:90vw; text-align:center; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast.t-ok  { background:var(--green); }
+.toast.t-err { background:var(--red); }
+.toast.t-warn { background:var(--amber); }
+
+/* RESPONSIVE */
+@media (min-width:640px) {
+  .overlay { align-items:center; padding:1rem; }
+  .modal { border-radius:14px; padding:1.75rem; max-height:90vh; }
+  .modal-handle { display:none; }
+}
+@media (max-width:700px) {
+  .main { padding:1rem; }
+  .stats { grid-template-columns:repeat(2,1fr); gap:8px; }
+  .table-wrap { display:none; }
+  .card-list { display:block; }
+  .tab-nav { padding:0.75rem 1rem 0; }
+  .sync-bar,.data-bar { padding:8px 1rem; }
+  .header { padding:0 1rem; }
+}
+@media (max-width:480px) {
+  .form-grid { grid-template-columns:1fr; }
+  .form-grid .span2 { grid-column:1; }
+  .modal-footer { flex-direction:column-reverse; }
+  .modal-footer .btn { width:100%; justify-content:center; padding:13px; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 20 20"><rect x="2" y="2" width="7" height="9" rx="1.5"/><rect x="11" y="2" width="7" height="5" rx="1.5"/><rect x="11" y="9" width="7" height="9" rx="1.5"/><rect x="2" y="13" width="7" height="5" rx="1.5"/></svg>
+    </div>
+    <div class="brand-name">Work<span>Hub</span></div>
+  </div>
+  <div class="header-right">
+    <div class="save-status"><div class="save-dot" id="save-dot"></div><span id="save-status">Loading…</span></div>
+    <button class="btn btn-sm" onclick="openSyncModal()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 8h12M10 5l3 3-3 3M6 11l-3-3 3-3"/></svg>
+      Sync
+    </button>
+  </div>
+</header>
+
+<!-- Sync hint banner — shown until dismissed -->
+<div class="sync-bar" id="sync-hint" style="display:none">
+  <div class="sync-msg">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.8"><circle cx="8" cy="8" r="6"/><path d="M8 5v3.5l2 1.5"/></svg>
+    Data is saved on this device. Use Sync → Export to move to another device.
+  </div>
+  <div class="sync-actions">
+    <button class="sync-btn light" onclick="openSyncModal()">Export</button>
+    <button class="sync-btn" onclick="dismissHint()">Got it</button>
+  </div>
+</div>
+
+<div class="data-bar">
+  <div class="data-info" id="data-info">Auto-saved on this device. Use Sync to transfer between devices.</div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('pw')" id="tab-btn-pw">
+    🔐 Passwords <span class="tab-count" id="pw-count">0</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('task')" id="tab-btn-task">
+    ✅ Tasks <span class="tab-count" id="task-count">0</span>
+  </button>
+</div>
+
+<div class="main">
+
+  <!-- PASSWORD PANEL -->
+  <div class="tab-panel active" id="panel-pw">
+    <div class="stats" id="pw-stats"></div>
+    <div class="toolbar">
+      <div class="search-box">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5l3 3"/></svg>
+        <input type="search" placeholder="Search project, username…" id="pw-search" oninput="renderPasswords()">
+      </div>
+      <select class="filter" id="pw-cat-filter" onchange="renderPasswords()"><option value="">All Categories</option></select>
+      <button class="btn btn-primary" onclick="openPwModal()">+ Add</button>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>Category</th><th>Project</th><th>Sub App</th><th>Username</th>
+        <th>Password</th><th>Login Link</th><th>Remarks</th><th>Last Updated</th><th>Actions</th>
+      </tr></thead><tbody id="pw-tbody"></tbody></table>
+    </div>
+    <div class="card-list" id="pw-cards"></div>
+  </div>
+
+  <!-- TASK PANEL -->
+  <div class="tab-panel" id="panel-task">
+    <div class="stats" id="task-stats"></div>
+    <div class="toolbar">
+      <div class="search-box">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10.5 10.5l3 3"/></svg>
+        <input type="search" placeholder="Search task, person…" id="task-search" oninput="renderTasks()">
+      </div>
+      <select class="filter" id="task-status-filter" onchange="renderTasks()">
+        <option value="">All Statuses</option><option>To Do</option><option>In Progress</option><option>Done</option><option>Blocked</option>
+      </select>
+      <select class="filter" id="task-cat-filter" onchange="renderTasks()"><option value="">All Categories</option></select>
+      <button class="btn btn-primary" onclick="openTaskModal()">+ Add</button>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>Category</th><th>Task Name</th><th>Status</th><th>Due Date</th><th>Concerned Person</th><th>Actions</th>
+      </tr></thead><tbody id="task-tbody"></tbody></table>
+    </div>
+    <div class="card-list" id="task-cards"></div>
+  </div>
+
+</div>
+
+<!-- PASSWORD MODAL -->
+<div class="overlay" id="pw-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title" id="pw-modal-title">Add Password Entry</div>
+      <button class="modal-close" onclick="closePwModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Category</label><input id="f-pw-cat" placeholder="e.g. Finance, Dev" list="cat-dl"><datalist id="cat-dl"></datalist></div>
+      <div class="field"><label>Project</label><input id="f-pw-proj" placeholder="e.g. Acme Corp"></div>
+      <div class="field"><label>Sub Application</label><input id="f-pw-subapp" placeholder="e.g. Admin Panel"></div>
+      <div class="field"><label>Username / Email</label><input id="f-pw-user" placeholder="username or email" autocomplete="off"></div>
+      <div class="field span2"><label>Login Link</label><input id="f-pw-link" placeholder="https://…" type="url" inputmode="url"></div>
+      <div class="field span2">
+        <label>Password</label>
+        <div class="pw-input-row">
+          <input id="f-pw-pass" type="text" placeholder="Enter or generate" autocomplete="off">
+          <button class="btn btn-sm" onclick="genPw()" type="button">Generate</button>
+          <button class="btn btn-sm" onclick="togglePwVis()" id="pw-vis-btn" type="button">Hide</button>
+        </div>
+      </div>
+      <div class="field span2"><label>Remarks</label><textarea id="f-pw-remarks" placeholder="Notes, hints…"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closePwModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePwEntry()">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY MODAL -->
+<div class="overlay" id="hist-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Password History</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px" id="hist-subtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeHistModal()">✕</button>
+    </div>
+    <div id="hist-body"></div>
+    <div class="modal-footer"><button class="btn" onclick="closeHistModal()">Close</button></div>
+  </div>
+</div>
+
+<!-- TASK MODAL -->
+<div class="overlay" id="task-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title" id="task-modal-title">Add Task</div>
+      <button class="modal-close" onclick="closeTaskModal()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="field"><label>Category</label><input id="f-t-cat" placeholder="e.g. Dev, Marketing" list="tcat-dl"><datalist id="tcat-dl"></datalist></div>
+      <div class="field"><label>Task Name</label><input id="f-t-name" placeholder="Describe the task…"></div>
+      <div class="field"><label>Status</label>
+        <select id="f-t-status"><option>To Do</option><option>In Progress</option><option>Done</option><option>Blocked</option></select>
+      </div>
+      <div class="field"><label>Due Date</label><input id="f-t-due" type="date"></div>
+      <div class="field span2"><label>Concerned Person</label><input id="f-t-person" placeholder="Name or team"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeTaskModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTaskEntry()">Save Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- SYNC MODAL -->
+<div class="overlay" id="sync-overlay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Sync Data</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">Transfer data between your devices</div>
+      </div>
+      <button class="modal-close" onclick="closeSyncModal()">✕</button>
+    </div>
+
+    <!-- Export folder row (shown only if FSAPI supported) -->
+    <div id="folder-row" style="display:none;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text2);margin-bottom:6px">Export Folder</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div id="folder-badge" style="flex:1;display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid var(--border2);border-radius:8px;background:var(--cream);font-size:12px;font-weight:600;color:var(--text2);min-width:0">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0"><path d="M2 4a1 1 0 011-1h3.5l1.5 2H13a1 1 0 011 1v6a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/></svg>
+          <span id="folder-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">No folder selected</span>
+        </div>
+        <button class="btn btn-sm" onclick="pickExportFolder()" id="btn-pick-folder">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4a1 1 0 011-1h3.5l1.5 2H13a1 1 0 011 1v6a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/></svg>
+          Choose Folder
+        </button>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:5px">Pick once per session — exports go directly to this folder silently.</div>
+    </div>
+
+    <div class="sync-option" onclick="exportData()">
+      <div class="sync-opt-title">⬇ Export — Save JSON</div>
+      <div id="export-sub" class="sync-opt-sub">Downloads <strong>WorkHub_Data.json</strong>. Set a folder above (desktop) to save directly there every time.</div>
+    </div>
+
+    <div class="sync-option" onclick="document.getElementById('import-input').click()">
+      <div class="sync-opt-title">⬆ Import — Load JSON</div>
+      <div class="sync-opt-sub">Load a previously exported file. <strong>Replaces</strong> all data on this device with the file's contents.</div>
+    </div>
+    <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
+
+    <div class="sync-divider"><span>extras</span></div>
+
+    <div class="sync-option" onclick="exportData(true)">
+      <div class="sync-opt-title">📋 Copy data to clipboard</div>
+      <div class="sync-opt-sub">Copies the raw JSON so you can paste it into a notes app, email, or anywhere.</div>
+    </div>
+
+    <div class="info-box">
+      <div class="info-box-title">💡 How to sync between devices</div>
+      <div class="info-box-body">
+        <strong>Desktop (Chrome/Edge):</strong> Choose Folder → pick your OneDrive folder → Export saves there directly every time.<br><br>
+        <strong>Mobile / Firefox:</strong> Export downloads the file → save to OneDrive → on other device use Import to load it.<br><br>
+        Workflow: Export on Device A → OneDrive → Import on Device B ✔
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <div style="font-size:11px;color:var(--text3);flex:1;align-self:center">Last export: <span id="last-export-lbl">Never</span></div>
+      <button class="btn" onclick="closeSyncModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LS_KEY  = 'workhub_v1';
+const LS_META = 'workhub_meta';
+let db = { passwords:[], tasks:[] };
+let editingPwId=null, editingTaskId=null, revealedPws={}, pwVisible=true;
+
+// ── STORAGE ──
+function loadFromStorage() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) { const p=JSON.parse(raw); db.passwords=p.passwords||[]; db.tasks=p.tasks||[]; }
+  } catch(e) {}
+}
+function saveToStorage() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(db)); localStorage.setItem(LS_META, JSON.stringify({lastSaved:new Date().toISOString()})); markClean(); }
+  catch(e) { toast('⚠ Storage full — please export your data','warn'); }
+}
+function getMeta() { try{return JSON.parse(localStorage.getItem(LS_META)||'{}');}catch(e){return{};} }
+
+// ── UTILS ──
+function uid()  { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function today(){ return new Date().toISOString().split('T')[0]; }
+function fmtDate(d) {
+  if(!d) return '—';
+  return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+}
+function isOverdue(d){ return d && new Date(d+'T00:00:00')<new Date(today()+'T00:00:00'); }
+function esc(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── STATUS ──
+function markClean() {
+  document.getElementById('save-dot').className='save-dot clean';
+  const m=getMeta();
+  document.getElementById('save-status').textContent = m.lastSaved
+    ? 'Saved '+new Date(m.lastSaved).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
+    : 'Saved';
+}
+
+// ── TABS ──
+function switchTab(t) {
+  ['pw','task'].forEach(id=>{
+    document.getElementById('panel-'+id).classList.toggle('active',id===t);
+    document.getElementById('tab-btn-'+id).classList.toggle('active',id===t);
+  });
+}
+
+// ── SYNC ──
+const FSAPI = ('showDirectoryPicker' in window);
+let exportDirHandle = null;  // pinned folder handle (FSAPI only)
+const EXPORT_FILENAME = 'WorkHub_Data.json';
+
+function openSyncModal() {
+  const m = getMeta();
+  document.getElementById('last-export-lbl').textContent = m.lastExport ? new Date(m.lastExport).toLocaleString() : 'Never';
+  // Show folder row only on supporting browsers
+  document.getElementById('folder-row').style.display = FSAPI ? 'block' : 'none';
+  // Restore remembered folder name (display only — handle must be re-acquired each session)
+  const savedFolder = localStorage.getItem('wh_export_folder');
+  if (FSAPI && savedFolder) updateFolderUI(savedFolder, false);
+  document.getElementById('sync-overlay').classList.add('open');
+}
+function closeSyncModal() { document.getElementById('sync-overlay').classList.remove('open'); }
+
+function updateFolderUI(name, verified) {
+  const badge = document.getElementById('folder-badge');
+  const nameEl = document.getElementById('folder-name');
+  const btn = document.getElementById('btn-pick-folder');
+  const sub = document.getElementById('export-sub');
+  nameEl.textContent = name;
+  if (verified) {
+    badge.style.borderColor = 'var(--green)';
+    badge.style.color = 'var(--green)';
+    btn.textContent = '✎ Change';
+    sub.innerHTML = `Saves directly to <strong>${name}/</strong> — silently overwrites the same file every time.`;
+  } else {
+    badge.style.borderColor = 'var(--border2)';
+    badge.style.color = 'var(--text2)';
+    btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4a1 1 0 011-1h3.5l1.5 2H13a1 1 0 011 1v6a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/></svg> Choose Folder';
+    sub.innerHTML = `Downloads <strong>WorkHub_Data.json</strong>. Set a folder above to save directly there every time.`;
+  }
+}
+
+async function pickExportFolder() {
+  if (!FSAPI) return;
+  try {
+    exportDirHandle = await window.showDirectoryPicker({ mode: 'readwrite', startIn: 'documents' });
+    localStorage.setItem('wh_export_folder', exportDirHandle.name);
+    updateFolderUI(exportDirHandle.name, true);
+    toast('✔ Export folder set: ' + exportDirHandle.name, 'ok');
+  } catch(e) {
+    if (e.name !== 'AbortError') toast('✗ Could not access folder', 'err');
+  }
+}
+
+async function exportData(copyOnly) {
+  const json = JSON.stringify({ _version:1, _exported:new Date().toISOString(), ...db }, null, 2);
+
+  // Clipboard copy mode
+  if (copyOnly) {
+    navigator.clipboard.writeText(json)
+      .then(() => toast('✔ Copied to clipboard', 'ok'))
+      .catch(() => toast('✗ Clipboard unavailable', 'err'));
+    return;
+  }
+
+  // FSAPI direct-to-folder mode (desktop Chrome/Edge with folder pinned)
+  if (FSAPI && exportDirHandle) {
+    try {
+      const perm = await exportDirHandle.requestPermission({ mode: 'readwrite' });
+      if (perm !== 'granted') throw new Error('Permission denied');
+      const fh = await exportDirHandle.getFileHandle(EXPORT_FILENAME, { create: true });
+      const writable = await fh.createWritable();
+      await writable.write(json);
+      await writable.close();
+      recordExport();
+      toast('✔ Saved to ' + exportDirHandle.name + '/' + EXPORT_FILENAME, 'ok');
+      closeSyncModal();
+      return;
+    } catch(e) {
+      if (e.name === 'AbortError') return;
+      // Permission expired or folder gone — reset and fall through to download
+      exportDirHandle = null;
+      updateFolderUI(localStorage.getItem('wh_export_folder') || 'Unknown', false);
+      toast('⚠ Folder access lost — downloading instead. Re-pick folder to restore.', 'warn');
+    }
+  }
+
+  // Fallback: standard browser download
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+  a.download = EXPORT_FILENAME;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  recordExport();
+  toast('✔ ' + EXPORT_FILENAME + ' downloaded' + (FSAPI && !exportDirHandle ? ' (choose a folder to save directly)' : ''), 'ok');
+  closeSyncModal();
+}
+
+function recordExport() {
+  const m = getMeta();
+  m.lastExport = new Date().toISOString();
+  localStorage.setItem(LS_META, JSON.stringify(m));
+  document.getElementById('last-export-lbl').textContent = new Date().toLocaleString();
+}
+
+function importData(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try {
+      const p=JSON.parse(ev.target.result);
+      if(!Array.isArray(p.passwords)||!Array.isArray(p.tasks)) throw new Error('Not a valid WorkHub file');
+      if(!confirm(`Import ${p.passwords.length} passwords and ${p.tasks.length} tasks?\n\nThis replaces all current data on this device.`)) return;
+      db.passwords=p.passwords; db.tasks=p.tasks;
+      saveToStorage(); refreshAll(); toast('✔ Imported successfully','ok'); closeSyncModal();
+    } catch(err){ toast('✗ '+err.message,'err'); }
+  };
+  reader.readAsText(file); e.target.value='';
+}
+
+function dismissHint(){ localStorage.setItem('workhub_hint','1'); document.getElementById('sync-hint').style.display='none'; }
+
+// ── BADGES ──
+const catColorMap={};
+const colorPool=['b-purple','b-green','b-blue','b-amber','b-red','b-gray'];
+let colorIdx=0;
+function catBadge(cat){ if(!cat) return '<span class="badge b-gray">—</span>'; const k=cat.toLowerCase(); if(!catColorMap[k]) catColorMap[k]=colorPool[colorIdx++%colorPool.length]; return `<span class="badge ${catColorMap[k]}">${esc(cat)}</span>`; }
+function statusBadge(s){ const m={'To Do':'b-gray','In Progress':'b-blue','Done':'b-green','Blocked':'b-red'}; return `<span class="badge ${m[s]||'b-gray'}">${esc(s)}</span>`; }
+
+// ── REFRESH ──
+function refreshAll(){ renderPasswords();renderTasks();renderPwStats();renderTaskStats();updateCounts();updateDataInfo();updateSuggestions(); }
+function updateCounts(){ document.getElementById('pw-count').textContent=db.passwords.length; document.getElementById('task-count').textContent=db.tasks.length; }
+function updateDataInfo(){ document.getElementById('data-info').innerHTML=`<strong>${db.passwords.length}</strong> passwords &nbsp;·&nbsp; <strong>${db.tasks.length}</strong> tasks &nbsp;·&nbsp; Auto-saved on this device &nbsp;·&nbsp; Use <strong>Sync</strong> to transfer between devices`; }
+function updateSuggestions(){
+  document.getElementById('cat-dl').innerHTML=[...new Set(db.passwords.map(p=>p.category).filter(Boolean))].map(c=>`<option value="${esc(c)}">`).join('');
+  document.getElementById('tcat-dl').innerHTML=[...new Set(db.tasks.map(t=>t.category).filter(Boolean))].map(c=>`<option value="${esc(c)}">`).join('');
+}
+
+// ── PW STATS ──
+function renderPwStats(){
+  const cats=new Set(db.passwords.map(p=>p.category).filter(Boolean));
+  const projs=new Set(db.passwords.map(p=>p.project).filter(Boolean));
+  document.getElementById('pw-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${db.passwords.length}</div><div class="stat-lbl">Entries</div></div>
+    <div class="stat-card"><div class="stat-num">${cats.size}</div><div class="stat-lbl">Categories</div></div>
+    <div class="stat-card"><div class="stat-num">${projs.size}</div><div class="stat-lbl">Projects</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${db.passwords.filter(p=>p.lastUpdated===today()).length}</div><div class="stat-lbl">Today</div></div>`;
+}
+
+// ── PW TABLE + CARDS ──
+function renderPasswords(){
+  const q=(document.getElementById('pw-search').value||'').toLowerCase();
+  const cf=(document.getElementById('pw-cat-filter').value||'').toLowerCase();
+  const cats=[...new Set(db.passwords.map(p=>p.category).filter(Boolean))];
+  const sel=document.getElementById('pw-cat-filter'); const cur=sel.value;
+  sel.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option${cur===c?' selected':''}>${esc(c)}</option>`).join('');
+  const list=db.passwords.filter(p=>(p.project+p.category+p.username+p.subapp+p.remarks).toLowerCase().includes(q)&&(cf?(p.category||'').toLowerCase()===cf:true));
+
+  const noMsg=db.passwords.length===0?'No entries yet — tap + Add':'No results';
+  const tbody=document.getElementById('pw-tbody');
+  if(!list.length){ tbody.innerHTML=`<tr><td colspan="9"><div class="empty"><div class="empty-icon">🔐</div><div class="empty-title">${noMsg}</div></div></td></tr>`; }
+  else tbody.innerHTML=list.map(p=>{
+    const shown=revealedPws[p.id];
+    const pwCell=shown
+      ?`<div class="pw-wrap"><span class="pw-text">${esc(p.password||'')}</span><button class="icon-btn" onclick="copyText('${esc(p.password||'')}','Password')">Copy</button><button class="icon-btn" onclick="toggleReveal('${p.id}')">Hide</button></div>`
+      :`<div class="pw-wrap"><span class="pw-dots">••••••••</span><button class="icon-btn" onclick="toggleReveal('${p.id}')">Show</button></div>`;
+    const link=p.link?`<a href="${esc(p.link)}" target="_blank" rel="noopener" style="color:var(--blue);font-size:12px;font-weight:600;text-decoration:none">Open ↗</a>`:'—';
+    return`<tr><td>${catBadge(p.category)}</td><td><strong>${esc(p.project)||'—'}</strong></td><td style="color:var(--text2);font-size:12px">${esc(p.subapp)||'—'}</td><td><span style="font-family:monospace;font-size:12px">${esc(p.username)||'—'}</span></td><td>${pwCell}</td><td>${link}</td><td style="max-width:130px;font-size:12px;color:var(--text3)">${esc(p.remarks)||'—'}</td><td style="font-size:11px;color:var(--text3);white-space:nowrap">${fmtDate(p.lastUpdated)}</td><td><div class="action-cell"><button class="btn btn-xs" onclick="openPwModal('${p.id}')">Edit</button><button class="btn btn-xs" onclick="showHistory('${p.id}')">Hist</button><button class="btn btn-xs btn-danger" onclick="deletePw('${p.id}')">Del</button></div></td></tr>`;
+  }).join('');
+
+  const cards=document.getElementById('pw-cards');
+  if(!list.length){ cards.innerHTML=`<div class="empty"><div class="empty-icon">🔐</div><div class="empty-title">${noMsg}</div></div>`; return; }
+  cards.innerHTML=list.map(p=>{
+    const shown=revealedPws[p.id];
+    const pwDisplay=shown
+      ?`<span class="pw-text">${esc(p.password||'')}</span><button class="icon-btn" onclick="copyText('${esc(p.password||'')}','Password')">Copy</button><button class="icon-btn" onclick="toggleReveal('${p.id}')">Hide</button>`
+      :`<span class="pw-dots">••••••</span><button class="icon-btn" onclick="toggleReveal('${p.id}')">Show</button>`;
+    return`<div class="m-card">
+      <div class="m-card-head"><div><div class="m-card-title">${esc(p.project)||'Untitled'}</div><div class="m-card-sub">${catBadge(p.category)}${p.subapp?`<span style="color:var(--text3)">${esc(p.subapp)}</span>`:''}</div></div></div>
+      ${p.username?`<div class="m-card-row"><span class="m-lbl">User</span><span style="font-family:monospace;font-size:12px">${esc(p.username)}</span></div>`:''}
+      <div class="m-card-row"><span class="m-lbl">Password</span><div class="pw-wrap" style="flex:1">${pwDisplay}</div></div>
+      ${p.link?`<div class="m-card-row"><span class="m-lbl">Link</span><a href="${esc(p.link)}" target="_blank" rel="noopener" style="color:var(--blue);font-size:12px;font-weight:600">Open ↗</a></div>`:''}
+      ${p.remarks?`<div class="m-card-row"><span class="m-lbl">Notes</span><span style="font-size:12px;color:var(--text3)">${esc(p.remarks)}</span></div>`:''}
+      <div class="m-card-row"><span class="m-lbl">Updated</span><span style="font-size:11px;color:var(--text3)">${fmtDate(p.lastUpdated)}</span></div>
+      <div class="m-card-actions"><button class="btn btn-sm" onclick="openPwModal('${p.id}')">Edit</button><button class="btn btn-sm" onclick="showHistory('${p.id}')">History</button><button class="btn btn-sm btn-danger" onclick="deletePw('${p.id}')">Delete</button></div>
+    </div>`;
+  }).join('');
+}
+
+function toggleReveal(id){ revealedPws[id]=!revealedPws[id]; renderPasswords(); }
+function copyText(text,label){ navigator.clipboard.writeText(text).then(()=>toast('✔ '+label+' copied','ok')).catch(()=>toast('✗ Clipboard unavailable','err')); }
+
+// ── PW MODAL ──
+function openPwModal(id){
+  editingPwId=id||null;
+  document.getElementById('pw-modal-title').textContent=id?'Edit Entry':'Add Password Entry';
+  pwVisible=true; document.getElementById('f-pw-pass').type='text'; document.getElementById('pw-vis-btn').textContent='Hide';
+  if(id){ const e=db.passwords.find(p=>p.id===id); if(e){ document.getElementById('f-pw-cat').value=e.category||''; document.getElementById('f-pw-proj').value=e.project||''; document.getElementById('f-pw-subapp').value=e.subapp||''; document.getElementById('f-pw-user').value=e.username||''; document.getElementById('f-pw-link').value=e.link||''; document.getElementById('f-pw-pass').value=e.password||''; document.getElementById('f-pw-remarks').value=e.remarks||''; } }
+  else { ['f-pw-cat','f-pw-proj','f-pw-subapp','f-pw-user','f-pw-link','f-pw-pass','f-pw-remarks'].forEach(i=>document.getElementById(i).value=''); }
+  document.getElementById('pw-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('f-pw-cat').focus(),100);
+}
+function closePwModal(){ document.getElementById('pw-overlay').classList.remove('open'); }
+function togglePwVis(){ pwVisible=!pwVisible; document.getElementById('f-pw-pass').type=pwVisible?'text':'password'; document.getElementById('pw-vis-btn').textContent=pwVisible?'Hide':'Show'; }
+function genPw(){ const c='ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%^&*'; let pw=''; for(let i=0;i<16;i++) pw+=c[Math.floor(Math.random()*c.length)]; document.getElementById('f-pw-pass').value=pw; document.getElementById('f-pw-pass').type='text'; pwVisible=true; document.getElementById('pw-vis-btn').textContent='Hide'; }
+
+function savePwEntry(){
+  const cat=document.getElementById('f-pw-cat').value.trim(), proj=document.getElementById('f-pw-proj').value.trim();
+  const user=document.getElementById('f-pw-user').value.trim(), pass=document.getElementById('f-pw-pass').value.trim();
+  const subapp=document.getElementById('f-pw-subapp').value.trim(), link=document.getElementById('f-pw-link').value.trim();
+  const rem=document.getElementById('f-pw-remarks').value.trim();
+  if(!proj&&!user){ toast('✗ Fill in Project or Username','err'); return; }
+  if(editingPwId){ const idx=db.passwords.findIndex(p=>p.id===editingPwId); if(idx>-1){ const old=db.passwords[idx]; const hist=old.history||[]; if(old.password&&old.password!==pass) hist.unshift({password:old.password,date:old.lastUpdated||today()}); db.passwords[idx]={...old,category:cat,project:proj,subapp,username:user,link,password:pass,remarks:rem,lastUpdated:today(),history:hist}; } }
+  else db.passwords.push({id:uid(),category:cat,project:proj,subapp,username:user,link,password:pass,remarks:rem,lastUpdated:today(),history:[]});
+  saveToStorage(); closePwModal(); refreshAll(); toast('✔ Entry saved','ok');
+}
+function deletePw(id){ if(!confirm('Delete this entry?')) return; db.passwords=db.passwords.filter(p=>p.id!==id); saveToStorage(); refreshAll(); toast('Entry deleted',''); }
+
+// ── HISTORY ──
+function showHistory(id){
+  const e=db.passwords.find(p=>p.id===id); if(!e) return;
+  document.getElementById('hist-subtitle').textContent=[e.project,e.subapp].filter(Boolean).join(' · ');
+  const body=document.getElementById('hist-body');
+  if(!e.history||!e.history.length){ body.innerHTML='<div class="empty" style="padding:1.25rem 0"><div class="empty-icon">📋</div><div class="empty-title">No history yet</div><div class="empty-sub">Recorded each time you change the password</div></div>'; }
+  else body.innerHTML=e.history.map((h,i)=>`<div class="hist-entry"><div><div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Password #${e.history.length-i}</div><div class="hist-pw">${esc(h.password)}</div></div><div class="hist-date">${fmtDate(h.date)}</div></div>`).join('');
+  document.getElementById('hist-overlay').classList.add('open');
+}
+function closeHistModal(){ document.getElementById('hist-overlay').classList.remove('open'); }
+
+// ── TASK STATS ──
+function renderTaskStats(){
+  const inprog=db.tasks.filter(t=>t.status==='In Progress').length;
+  const done=db.tasks.filter(t=>t.status==='Done').length;
+  const overdue=db.tasks.filter(t=>isOverdue(t.due)&&t.status!=='Done').length;
+  document.getElementById('task-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${db.tasks.length}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--blue)">${inprog}</div><div class="stat-lbl">In Progress</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${done}</div><div class="stat-lbl">Done</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--red)">${overdue}</div><div class="stat-lbl">Overdue</div></div>`;
+}
+
+// ── TASK TABLE + CARDS ──
+function renderTasks(){
+  const q=(document.getElementById('task-search').value||'').toLowerCase();
+  const sf=document.getElementById('task-status-filter').value;
+  const cf=(document.getElementById('task-cat-filter').value||'').toLowerCase();
+  const cats=[...new Set(db.tasks.map(t=>t.category).filter(Boolean))];
+  const csel=document.getElementById('task-cat-filter'); const ccur=csel.value;
+  csel.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option${ccur===c?' selected':''}>${esc(c)}</option>`).join('');
+  const list=db.tasks.filter(t=>(t.name+t.category+t.person).toLowerCase().includes(q)&&(sf?t.status===sf:true)&&(cf?(t.category||'').toLowerCase()===cf:true));
+
+  const noMsg=db.tasks.length===0?'No tasks yet':'No results';
+  const tbody=document.getElementById('task-tbody');
+  if(!list.length){ tbody.innerHTML=`<tr><td colspan="6"><div class="empty"><div class="empty-icon">✅</div><div class="empty-title">${noMsg}</div></div></td></tr>`; }
+  else tbody.innerHTML=list.map(t=>{ const od=isOverdue(t.due)&&t.status!=='Done'; return`<tr><td>${catBadge(t.category)}</td><td><strong>${esc(t.name)}</strong></td><td>${statusBadge(t.status)}</td><td class="${od?'overdue':''}" style="font-size:13px;white-space:nowrap">${fmtDate(t.due)}${od?' ⚠':''}</td><td style="font-size:13px;color:var(--text2)">${esc(t.person)||'—'}</td><td><div class="action-cell"><button class="btn btn-xs" onclick="openTaskModal('${t.id}')">Edit</button><button class="btn btn-xs btn-danger" onclick="deleteTask('${t.id}')">Del</button></div></td></tr>`; }).join('');
+
+  const cards=document.getElementById('task-cards');
+  if(!list.length){ cards.innerHTML=`<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">${noMsg}</div><div class="empty-sub">${db.tasks.length===0?'Tap + Add to create a task':''}</div></div>`; return; }
+  cards.innerHTML=list.map(t=>{ const od=isOverdue(t.due)&&t.status!=='Done'; return`<div class="m-card"><div class="m-card-head"><div><div class="m-card-title">${esc(t.name)}</div><div class="m-card-sub">${catBadge(t.category)}</div></div>${statusBadge(t.status)}</div>${t.due?`<div class="m-card-row"><span class="m-lbl">Due</span><span class="${od?'overdue':''}">${fmtDate(t.due)}${od?' ⚠':''}</span></div>`:''}${t.person?`<div class="m-card-row"><span class="m-lbl">Person</span><span>${esc(t.person)}</span></div>`:''}<div class="m-card-actions"><button class="btn btn-sm" onclick="openTaskModal('${t.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteTask('${t.id}')">Delete</button></div></div>`; }).join('');
+}
+
+// ── TASK MODAL ──
+function openTaskModal(id){
+  editingTaskId=id||null;
+  document.getElementById('task-modal-title').textContent=id?'Edit Task':'Add Task';
+  if(id){ const e=db.tasks.find(t=>t.id===id); if(e){ document.getElementById('f-t-cat').value=e.category||''; document.getElementById('f-t-name').value=e.name||''; document.getElementById('f-t-status').value=e.status||'To Do'; document.getElementById('f-t-due').value=e.due||''; document.getElementById('f-t-person').value=e.person||''; } }
+  else { ['f-t-cat','f-t-name','f-t-due','f-t-person'].forEach(i=>document.getElementById(i).value=''); document.getElementById('f-t-status').value='To Do'; }
+  document.getElementById('task-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('f-t-cat').focus(),100);
+}
+function closeTaskModal(){ document.getElementById('task-overlay').classList.remove('open'); }
+function saveTaskEntry(){
+  const name=document.getElementById('f-t-name').value.trim(); if(!name){ toast('✗ Task name is required','err'); return; }
+  const entry={id:editingTaskId||uid(),category:document.getElementById('f-t-cat').value.trim(),name,status:document.getElementById('f-t-status').value,due:document.getElementById('f-t-due').value,person:document.getElementById('f-t-person').value.trim()};
+  if(editingTaskId){ const i=db.tasks.findIndex(t=>t.id===editingTaskId); if(i>-1) db.tasks[i]=entry; }
+  else db.tasks.push(entry);
+  saveToStorage(); closeTaskModal(); refreshAll(); toast('✔ Task saved','ok');
+}
+function deleteTask(id){ if(!confirm('Delete this task?')) return; db.tasks=db.tasks.filter(t=>t.id!==id); saveToStorage(); refreshAll(); toast('Task deleted',''); }
+
+// ── TOAST ──
+function toast(msg,type){ const el=document.getElementById('toast'); el.textContent=msg; el.className='toast show'+(type==='ok'?' t-ok':type==='err'?' t-err':type==='warn'?' t-warn':''); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3000); }
+
+// ── OVERLAYS ──
+['pw-overlay','hist-overlay','task-overlay','sync-overlay'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){ if(e.target===this) this.classList.remove('open'); });
+});
+
+// ── KEYBOARD ──
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape') ['pw-overlay','hist-overlay','task-overlay','sync-overlay'].forEach(id=>document.getElementById(id).classList.remove('open'));
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){ e.preventDefault(); exportData(); }
+});
+
+// ── INIT ──
+loadFromStorage();
+refreshAll();
+markClean();
+if(db.passwords.length+db.tasks.length>0 && !localStorage.getItem('workhub_hint'))
+  document.getElementById('sync-hint').style.display='flex';
+</script>
+</body>
+</html>
